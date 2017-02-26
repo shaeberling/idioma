@@ -1,0 +1,82 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta content="initial-scale=1, minimum-scale=1, width=device-width" name="viewport">
+    <title>Idioma</title>
+</head>
+<body>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #F5F5F5;
+  text-align: center;
+  font-size: 2em;
+}
+
+input {
+  border: 2px solid gray;
+  font-size: 1em;
+}
+
+.source {
+  font-weight: bold;
+}
+
+#correct_answer {
+  display: none;
+}
+
+#note {
+  display: none;
+}
+
+</style>
+
+
+<div class="source"><!--IDI source OMA--></div>
+<input id="usertext" name="usertext" autofocus onkeypress="return onKeyPress(event)"/>
+
+<div id="note">Note: <!--IDI note OMA--></div>
+<div id="correct_answer">Correct answer: <!--IDI solution OMA--></div>
+
+<form id="submit_result_form" method="post">
+    <input name="hash" value="<!--IDI hash OMA-->" type="hidden"/>
+    <input id="correct" name="correct" value="" type="hidden"/>
+</form>
+
+<script>
+var submitOnFalse = false
+
+var note = '<!--IDI note OMA-->';
+if (note.length > 0) {
+  document.getElementById('note').style.display = 'block';
+}
+
+function onKeyPress(event) {
+  if (submitOnFalse) {
+    document.getElementById('submit_result_form').submit();
+    return false;
+  }
+
+  var solution = '<!--IDI solution OMA-->';
+  if (event.keyCode == 13) {
+    var typed = document.getElementById('usertext').value.toLowerCase();
+    var correct = typed == solution.toLowerCase();
+    document.getElementById('correct').value = correct;
+    if (correct) {
+      document.getElementById('submit_result_form').submit();
+    } else {
+      document.getElementById('correct_answer').style.display = 'block';
+      submitOnFalse = true;
+    }
+    return false;
+  }
+  return true;
+};
+
+</script>
+
+</body>
+</html>
