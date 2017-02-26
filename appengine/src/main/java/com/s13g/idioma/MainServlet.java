@@ -35,22 +35,30 @@ public class MainServlet extends AbstractIdiomaServlet {
   private static Bins sBins = TranslationsUtil.getBinnedTranslations();
 
   @Override
-  protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+  protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+      throws ServletException, IOException {
     doServe(req, resp);
   }
 
   @Override
-  protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+  protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+      throws ServletException, IOException {
     long hash = Long.parseLong(req.getParameter("hash"));
     boolean correct = Boolean.parseBoolean(req.getParameter("correct"));
     sBins.progress(hash, correct);
     doServe(req, resp);
   }
 
-  private void doServe(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+  private void doServe(HttpServletRequest req, HttpServletResponse resp)
+      throws ServletException, IOException {
     resp.setContentType("text/html; charset=UTF-8");
     resp.setCharacterEncoding("UTF-8");
     Translation translation = sBins.getRandom();
+    if (translation == null) {
+      resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
+      resp.getWriter().write("No data found.");
+      return;
+    }
 
     String html = Template.fromFile("WEB-INF/html/index.html")
         .with("source", translation.source)

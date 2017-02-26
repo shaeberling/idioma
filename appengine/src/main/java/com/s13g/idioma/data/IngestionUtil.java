@@ -17,12 +17,16 @@
 package com.s13g.idioma.data;
 
 import com.s13g.idioma.ResultOr;
+import com.s13g.idioma.ingestion.TranslationProvider;
+import com.s13g.idioma.ingestion.TranslationProvider.TranslationProvidingException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -31,54 +35,19 @@ import java.util.logging.Logger;
 public class IngestionUtil {
   private static final Logger LOG = Logger.getLogger("IngestionUtil");
 
-  /**
-   * Update the translation data in the data store based on the exported CSV data.
-   *
-   * @param data valid CSV data in the right format
-   * @return Whether the data was imported properly.
-   */
-  public ResultOr<Boolean> ingestCsv(String data) {
-    BufferedReader reader = new BufferedReader(new StringReader(data));
+  public int ingest(TranslationProvider provider) throws IngestionException {
     try {
-      String[] firstLine = reader.readLine().split("\\t");
-      if (firstLine.length != 5) {
-        return new ResultOr<>(false, "Invalid format");
-      }
-      List<Translation> translations = new LinkedList<>();
-      String line = null;
-      while ((line = reader.readLine()) != null) {
-        ingestLine(line, translations);
-      }
+      Collection<Translation> translations = provider.getCompleteSet();
       TranslationsUtil.persist(translations);
-    } catch (IOException e) {
-      return new ResultOr<>(false, e.getMessage());
+      return translations.size();
+    } catch (TranslationProvidingException e) {
+      throw new IngestionException(e.getMessage(), e);
     }
-    return new ResultOr<>(true);
   }
 
-  /**
-   * Ingest a single line from the data spreadsheet.
-   *
-   * @param line valid CSV line
-   * @param translations a list of all translation to which we'll add the new one extracted from the
-   * line.
-   */
-  private void ingestLine(String line, List<Translation> translations) {
-    String[] parts = line.split("\\t");
-    if (parts.length < 2) {
-      LOG.warning("Skipping line: '" + line + "'.");
-      return;
-    }
-    String from = parts[0];
-    String to = parts[1];
-
-    String note = parts.length > 2 ? parts[2] : "";
-    boolean fromConversation = parts.length > 3 && !parts[3].isEmpty();
-    boolean disabled = parts.length > 4 && !parts[4].isEmpty();
-    if (!disabled) {
-      TranslationsUtil.addTranslationsTo(from, to, note, fromConversation, translations);
-    } else {
-      LOG.info("Skipping (disabled): " + from + " / " + to);
+  public static class IngestionException extends Exception {
+    public IngestionException(String message, Throwable t) {
+      super("Cannot ingest: " + message, t);
     }
   }
 }

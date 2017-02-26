@@ -18,6 +18,9 @@ package com.s13g.idioma;
 
 import com.google.common.io.ByteStreams;
 import com.s13g.idioma.data.IngestionUtil;
+import com.s13g.idioma.ingestion.CsvTranslationProvider;
+import com.s13g.idioma.ingestion.SpreadsheetsTranslationProvider;
+import com.s13g.idioma.ingestion.TranslationProvider;
 import com.s13g.idioma.ui.Template;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
@@ -28,44 +31,69 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.logging.Logger;
 
 /**
  * Frontend for the data ingestion.
  */
 public class IngestionServlet extends AbstractIdiomaServlet {
+  private static final Logger LOG = Logger.getLogger("IngestionServlet");
 
   @Override
-  protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+  protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+      throws ServletException, IOException {
     resp.setContentType("text/html");
     String html = Template.fromFile("WEB-INF/html/ingestion.html").render();
     resp.getWriter().write(html);
   }
 
   @Override
-  protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+  protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+      throws ServletException, IOException {
     resp.setContentType("text/html");
-    InputStream fileStream;
-    ServletFileUpload upload = new ServletFileUpload();
-    try {
-      fileStream = upload.getItemIterator(req).next().openStream();
-    } catch (FileUploadException e) {
-      resp.getWriter().write(e.getMessage());
+
+    int numTranslations;
+    TranslationProvider provider;
+    LOG.info("Source param: " + req.getParameter("source"));
+    if ("gsheets".equals(req.getParameter("source"))) {
+      provider = SpreadsheetsTranslationProvider.create();
+    } else {
+      try {
+        provider = getCsvProvider(req);
+      } catch (Exception e) {
+        resp.getWriter().write(e.getMessage());
+        resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        return;
+      }
+    }
+
+    if (provider == null) {
+      resp.getWriter().write("No provider found.");
       resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
       return;
     }
 
-    if (fileStream == null) {
-      resp.getWriter().write("No file stream.");
-      resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+    try {
+      numTranslations = (new IngestionUtil()).ingest(provider);
+    } catch (IngestionUtil.IngestionException e) {
+      resp.getWriter().write("Something went wrong: " + e.getMessage());
       return;
+    }
+    resp.getWriter().write(
+        String.format("Successfully ingested %d translations.", numTranslations));
+  }
+
+  private TranslationProvider getCsvProvider(HttpServletRequest req) throws IOException,
+      FileUploadException {
+    InputStream fileStream;
+    ServletFileUpload upload = new ServletFileUpload();
+    fileStream = upload.getItemIterator(req).next().openStream();
+
+    if (fileStream == null) {
+      throw new IOException("No file stream");
     }
     byte[] bytes = ByteStreams.toByteArray(fileStream);
     String csvString = new String(bytes, Charset.forName("UTF-8"));
-    ResultOr<Boolean> result = (new IngestionUtil()).ingestCsv(csvString);
-    if (!result.getResult()) {
-      resp.getWriter().write("Something went wrong: " + result.getErrorMessage());
-      return;
-    }
-    resp.getWriter().write("Ingestion POST here ...  Loaded " + bytes.length + " bytes.");
+    return new CsvTranslationProvider(csvString);
   }
 }

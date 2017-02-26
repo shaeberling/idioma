@@ -16,12 +16,7 @@
 
 package com.s13g.idioma.data;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.logging.Logger;
 
 import static com.googlecode.objectify.ObjectifyService.ofy;
@@ -48,11 +43,17 @@ public class TranslationsUtil {
     return new Bins(bins);
   }
 
-  static void addTranslationsTo(String from,
-                                String to,
-                                String note,
-                                boolean fromConversation,
-                                List<Translation> list) {
+  /**
+   * Creates 'Translation' objects, two for each call. The regular one and the reversed one. It
+   * also ensues that the hash is set.
+   */
+  public static void addInitializedTranslationPairsTo(String from,
+                                                      String to,
+                                                      String note,
+                                                      boolean fromConversation,
+                                                      boolean disabled,
+                                                      boolean important,
+                                                      Collection<Translation> list) {
     {
       // Non-Reverse
       Translation t = new Translation();
@@ -60,7 +61,8 @@ public class TranslationsUtil {
       t.translated = to;
       t.note = note;
       t.fromConversation = fromConversation;
-      t.disabled = false;
+      t.disabled = disabled;
+      t.important = important;
       t.reversed = false;
       t.bin = 0;
       t.setHash();
@@ -74,7 +76,8 @@ public class TranslationsUtil {
       t.translated = from;
       t.note = note;
       t.fromConversation = fromConversation;
-      t.disabled = false;
+      t.disabled = disabled;
+      t.important = important;
       t.reversed = true;
       t.bin = 0;
       t.setHash();
@@ -82,7 +85,7 @@ public class TranslationsUtil {
     }
   }
 
-  static void persist(List<Translation> translations) {
+  static void persist(Collection<Translation> translations) {
     ofy().save().entities(translations).now();
   }
 

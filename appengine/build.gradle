@@ -19,24 +19,31 @@ def devEmail = props.getProperty("devEmail")
 def appengineVersion = "1.9.42"
 
 dependencies {
-  appengineSdk "com.google.appengine:appengine-java-sdk:${appengineVersion}"
-  compile "javax.servlet:servlet-api:2.5"
-  compile "com.google.appengine:appengine-api-1.0-sdk:${appengineVersion}"
-  compile 'com.google.guava:guava:19.0'
-  compile 'commons-fileupload:commons-fileupload:1.3.2'
-  compile group: 'com.googlecode.objectify', name: 'objectify', version: '5.1.13'
+    appengineSdk "com.google.appengine:appengine-java-sdk:${appengineVersion}"
+    compile "javax.servlet:servlet-api:2.5"
+    compile "com.google.appengine:appengine-api-1.0-sdk:${appengineVersion}"
+    compile 'com.google.guava:guava:19.0'
+    compile 'commons-fileupload:commons-fileupload:1.3.2'
+    compile group: 'com.googlecode.objectify', name: 'objectify', version: '5.1.13'
+
+    // For Google Sheets API access.
+    compile 'com.google.api-client:google-api-client-appengine:1.22.0'
+    compile 'com.google.api-client:google-api-client:1.22.0'
+    compile 'com.google.api-client:google-api-client-gson:1.22.0'
+    compile 'com.google.oauth-client:google-oauth-client-jetty:1.22.0'
+    compile 'com.google.apis:google-api-services-sheets:v4-rev461-1.22.0'
 }
 
 
 appengine {
-  httpPort = 8888
-  downloadSdk = true
-  appcfg {
-    email = "${devEmail}"
-    noCookies = true
-    oauth2 = true
-  }
-  jvmFlags = ["-Ddatastore.backing_store=$rootDir/local_db.bin"]
+    httpPort = 8888
+    downloadSdk = true
+    appcfg {
+        email = "${devEmail}"
+        noCookies = true
+        oauth2 = true
+    }
+    jvmFlags = ["-Ddatastore.backing_store=$rootDir/local_db.bin"]
 }
 
 sourceCompatibility = JavaVersion.VERSION_1_7

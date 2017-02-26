@@ -7,7 +7,12 @@
 <h1>Idioma data ingestion</h1>
 <form action="/ingest" method="post" enctype="multipart/form-data">
     <input name="file" type="file"/> <br/>
-    <input name="Submit" type="submit" value="Sumbit">
+    <input name="Submit" type="submit" value="Import from CSV">
+</form>
+
+<form action="/ingest" method="post">
+    <input name="source" type="hidden" value="gsheets"/>
+    <input name="Submit" type="submit" value="Import from Google Sheets">
 </form>
 </body>
 </html>

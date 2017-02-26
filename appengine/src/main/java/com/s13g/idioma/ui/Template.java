@@ -37,7 +37,7 @@ public class Template {
   private final String content;
   private final Map<String, String> values = new HashMap<>();
 
-  public Template(String content) {
+  private Template(String content) {
     this.content = content;
   }
 
