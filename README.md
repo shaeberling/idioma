@@ -3,8 +3,6 @@
 Idioma is a simple vocabulary practicing system running on AppEngine.
 
 ## TODOs:
- - Implement a status page which shows how many items are in the bins.
- - Update data based on result. Make the items change bins.
  - Implement quick mode, without text input (left/right for correct/false). Space for next.
  - Allow spreadsheet ID to be entered on ingestion page
  - Make spreadsheet format open once it is stable.
