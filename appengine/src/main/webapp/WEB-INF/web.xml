@@ -11,6 +11,14 @@
         <url-pattern>/</url-pattern>
     </servlet-mapping>
     <servlet>
+        <servlet-name>statsServlet</servlet-name>
+        <servlet-class>com.s13g.idioma.StatisticsServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>statsServlet</servlet-name>
+        <url-pattern>/stats</url-pattern>
+    </servlet-mapping>
+    <servlet>
         <servlet-name>ingestionServlet</servlet-name>
         <servlet-class>com.s13g.idioma.IngestionServlet</servlet-class>
     </servlet>

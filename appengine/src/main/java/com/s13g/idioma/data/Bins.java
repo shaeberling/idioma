@@ -17,6 +17,7 @@
 package com.s13g.idioma.data;
 
 import javax.annotation.Nullable;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,13 @@ public class Bins {
 
   private final List<List<Translation>> mBins;
   private final Map<Long, Translation> mByHash;
+  private final DataStoreUpdater mUpdater;
+
+  /**
+   * Note: Do not just change this number to change the bin number. More instances in the code
+   * need to change to support a different number of bins.
+   */
+  private static final int NUM_BINS = 5;
 
   @Nullable
   private static Bins sInstance;
@@ -61,8 +69,9 @@ public class Bins {
     createInstance();
   }
 
-  Bins(List<List<Translation>> bins) {
+  Bins(List<List<Translation>> bins, DataStoreUpdater updater) {
     mBins = bins;
+    mUpdater = updater;
 
     mByHash = new HashMap<>();
     for (List<Translation> bin : bins) {
@@ -104,14 +113,29 @@ public class Bins {
       return;
     }
 
-
-    int oldBin = translation.bin;
+    if (!mBins.get(translation.bin).remove(translation)) {
+      LOG.severe(String.format("The translation for %s was not found in bin #%d.",
+          translation.source, translation.bin));
+      return;
+    }
     if (!correct) {
       translation.bin = 0;
-    } else {
-      LOG.warning("Positive progression not implemented yet.");
+    } else if (translation.bin < 4) {
+      translation.bin += 1;
     }
-    // TODO: Persist.
+    mBins.get(translation.bin).add(translation);
+    mUpdater.persist(Collections.singleton(translation));
+  }
+
+  /**
+   * @return Statistics about the current data in the bins.
+   */
+  public Statistics getStatistics() {
+    Statistics stats = new Statistics();
+    for (int i = 0; i < NUM_BINS; ++i) {
+      stats.numItemsInBin[i] = mBins.get(i).size();
+    }
+    return stats;
   }
 
   /**
@@ -133,5 +157,9 @@ public class Bins {
     } else {
       return 4;
     }
+  }
+
+  public static class Statistics {
+    public int[] numItemsInBin = new int[NUM_BINS];
   }
 }

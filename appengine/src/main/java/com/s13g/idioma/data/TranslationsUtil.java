@@ -57,7 +57,7 @@ public class TranslationsUtil implements TranslationProvider, DataStoreUpdater {
     for (Translation t : getCompleteSet()) {
       bins.get(t.bin).add(t);
     }
-    return new Bins(bins);
+    return new Bins(bins, this);
   }
 
   /**
