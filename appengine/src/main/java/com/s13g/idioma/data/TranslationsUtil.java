@@ -39,17 +39,6 @@ public class TranslationsUtil implements TranslationProvider, DataStoreUpdater {
     return translations;
   }
 
-  public Bins getBinnedTranslations() throws TranslationProvidingException {
-    ArrayList<List<Translation>> bins = new ArrayList<>(NUM_BINS);
-    for (int i = 0; i < NUM_BINS; ++i) {
-      bins.add(new LinkedList<Translation>());
-    }
-    for (Translation t : getCompleteSet()) {
-      bins.get(t.bin).add(t);
-    }
-    return new Bins(bins);
-  }
-
   @Override
   public void persist(Collection<Translation> translations) {
     ofy().save().entities(translations).now();
@@ -60,17 +49,28 @@ public class TranslationsUtil implements TranslationProvider, DataStoreUpdater {
     ofy().delete().entities(translations).now();
   }
 
+  Bins getBinnedTranslations() throws TranslationProvidingException {
+    ArrayList<List<Translation>> bins = new ArrayList<>(NUM_BINS);
+    for (int i = 0; i < NUM_BINS; ++i) {
+      bins.add(new LinkedList<Translation>());
+    }
+    for (Translation t : getCompleteSet()) {
+      bins.get(t.bin).add(t);
+    }
+    return new Bins(bins);
+  }
+
   /**
    * Creates 'Translation' objects, two for each call. The regular one and the reversed one. It
    * also ensues that the hash is set.
    */
   public static void addInitializedTranslationPairsTo(String from,
-                                               String to,
-                                               String note,
-                                               boolean fromConversation,
-                                               boolean disabled,
-                                               boolean important,
-                                               Collection<Translation> list) {
+                                                      String to,
+                                                      String note,
+                                                      boolean fromConversation,
+                                                      boolean disabled,
+                                                      boolean important,
+                                                      Collection<Translation> list) {
     {
       // Non-Reverse
       Translation t = new Translation();

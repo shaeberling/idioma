@@ -62,6 +62,9 @@ public class IngestionUtil {
     } else {
       LOG.warning("Not performing any action, TESTRUN enabled.");
     }
+
+    // TODO: Keep a register of components that need updates.
+    Bins.onDataUpdated();
     return UpdateStats.from(updateResult);
   }
 

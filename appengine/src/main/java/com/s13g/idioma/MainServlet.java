@@ -35,17 +35,6 @@ import java.util.logging.Logger;
 public class MainServlet extends AbstractIdiomaServlet {
   private static final Logger LOG = Logger.getLogger("MainServlet");
 
-  // TODO: Keep this updated correctly when data is updated.
-  private static Bins sBins;
-
-  static {
-    try {
-      sBins = (new TranslationsUtil().getBinnedTranslations());
-    } catch (TranslationProvider.TranslationProvidingException e) {
-      LOG.log(Level.SEVERE, "Cannot lot bins.", e);
-    }
-  }
-
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
@@ -57,7 +46,7 @@ public class MainServlet extends AbstractIdiomaServlet {
       throws ServletException, IOException {
     long hash = Long.parseLong(req.getParameter("hash"));
     boolean correct = Boolean.parseBoolean(req.getParameter("correct"));
-    sBins.progress(hash, correct);
+    Bins.getInstance().processResponse(hash, correct);
     doServe(req, resp);
   }
 
@@ -65,7 +54,7 @@ public class MainServlet extends AbstractIdiomaServlet {
       throws ServletException, IOException {
     resp.setContentType("text/html; charset=UTF-8");
     resp.setCharacterEncoding("UTF-8");
-    Translation translation = sBins.getRandom();
+    Translation translation = Bins.getInstance().getRandom();
     if (translation == null) {
       resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
       resp.getWriter().write("No data found.");

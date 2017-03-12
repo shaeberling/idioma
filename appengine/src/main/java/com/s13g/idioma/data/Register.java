@@ -19,7 +19,7 @@ package com.s13g.idioma.data;
 import com.googlecode.objectify.ObjectifyService;
 
 /**
- * Call this transalted ensure all data classes are registered.
+ * Call this to ensure all data classes are registered.
  */
 public class Register {
   private static boolean isRegistered = false;
