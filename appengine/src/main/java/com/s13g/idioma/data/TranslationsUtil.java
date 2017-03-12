@@ -16,7 +16,10 @@
 
 package com.s13g.idioma.data;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.logging.Logger;
 
 import static com.googlecode.objectify.ObjectifyService.ofy;
@@ -24,23 +27,37 @@ import static com.googlecode.objectify.ObjectifyService.ofy;
 /**
  * Utilities for managing Translations.
  */
-public class TranslationsUtil {
+public class TranslationsUtil implements TranslationProvider, DataStoreUpdater {
   private static final Logger LOG = Logger.getLogger("TranslationsUtil");
 
   private static final int NUM_BINS = 5;
 
-  public static Bins getBinnedTranslations() {
+  @Override
+  public Collection<Translation> getCompleteSet() throws TranslationProvidingException {
     List<Translation> translations = ofy().load().type(Translation.class).list();
     LOG.info("Loaded translations: " + translations.size());
+    return translations;
+  }
 
+  public Bins getBinnedTranslations() throws TranslationProvidingException {
     ArrayList<List<Translation>> bins = new ArrayList<>(NUM_BINS);
     for (int i = 0; i < NUM_BINS; ++i) {
       bins.add(new LinkedList<Translation>());
     }
-    for (Translation t : translations) {
+    for (Translation t : getCompleteSet()) {
       bins.get(t.bin).add(t);
     }
     return new Bins(bins);
+  }
+
+  @Override
+  public void persist(Collection<Translation> translations) {
+    ofy().save().entities(translations).now();
+  }
+
+  @Override
+  public void remove(Collection<Translation> translations) {
+    ofy().delete().entities(translations).now();
   }
 
   /**
@@ -48,12 +65,12 @@ public class TranslationsUtil {
    * also ensues that the hash is set.
    */
   public static void addInitializedTranslationPairsTo(String from,
-                                                      String to,
-                                                      String note,
-                                                      boolean fromConversation,
-                                                      boolean disabled,
-                                                      boolean important,
-                                                      Collection<Translation> list) {
+                                               String to,
+                                               String note,
+                                               boolean fromConversation,
+                                               boolean disabled,
+                                               boolean important,
+                                               Collection<Translation> list) {
     {
       // Non-Reverse
       Translation t = new Translation();
@@ -82,82 +99,6 @@ public class TranslationsUtil {
       t.bin = 0;
       t.setHash();
       list.add(t);
-    }
-  }
-
-  static void persist(Collection<Translation> translations) {
-    ofy().save().entities(translations).now();
-  }
-
-  public static class Bins {
-    private final List<List<Translation>> mBins;
-    private final Map<Long, Translation> mByHash;
-
-    Bins(List<List<Translation>> bins) {
-      mBins = bins;
-
-      mByHash = new HashMap<>();
-      for (List<Translation> bin : bins) {
-        for (Translation translation : bin) {
-          mByHash.put(translation.hash, translation);
-        }
-      }
-    }
-
-    /**
-     * Can return null.
-     */
-    public Translation getRandom() {
-      int tries = 0;
-      List<Translation> translations;
-      do {
-        // Get a random, non-empty bin.
-        int bin = getRandomBin();
-        translations = mBins.get(bin);
-        if (++tries > 100) {
-          return null;
-        }
-      } while (translations.size() <= 0);
-
-      // Get a random item from the bin.
-      int itemIdx = (new Random()).nextInt(translations.size());
-      return translations.get(itemIdx);
-    }
-
-    /**
-     * Progress a translation based on the result.
-     */
-    public void progress(long hash, boolean correct) {
-      LOG.info("Hash: " + hash + " correct: " + correct);
-      Translation translation = mByHash.get(hash);
-      if (translation == null) {
-        LOG.severe("Could not found translation: " + hash);
-        return;
-      }
-      int oldBin = translation.bin;
-      if (!correct) {
-        translation.bin = 0;
-      } else {
-
-      }
-
-    }
-
-    private static int getRandomBin() {
-      // 16 8 4 2 1 = 31
-      // Bins: 0000000000000000 11111111 2222 33 4
-      int r = (new Random()).nextInt(31);
-      if (r < 16) {
-        return 0;
-      } else if (r < 24) {
-        return 1;
-      } else if (r < 28) {
-        return 2;
-      } else if (r < 30) {
-        return 3;
-      } else {
-        return 4;
-      }
     }
   }
 }

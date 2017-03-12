@@ -17,6 +17,7 @@
 package com.s13g.idioma.ingestion;
 
 import com.s13g.idioma.data.Translation;
+import com.s13g.idioma.data.TranslationProvider;
 import com.s13g.idioma.data.TranslationsUtil;
 
 import java.io.BufferedReader;

@@ -16,15 +16,17 @@
 
 package com.s13g.idioma;
 
+import com.s13g.idioma.data.Bins;
 import com.s13g.idioma.data.Translation;
+import com.s13g.idioma.data.TranslationProvider;
 import com.s13g.idioma.data.TranslationsUtil;
-import com.s13g.idioma.data.TranslationsUtil.Bins;
 import com.s13g.idioma.ui.Template;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -32,7 +34,17 @@ import java.util.logging.Logger;
  */
 public class MainServlet extends AbstractIdiomaServlet {
   private static final Logger LOG = Logger.getLogger("MainServlet");
-  private static Bins sBins = TranslationsUtil.getBinnedTranslations();
+
+  // TODO: Keep this updated correctly when data is updated.
+  private static Bins sBins;
+
+  static {
+    try {
+      sBins = (new TranslationsUtil().getBinnedTranslations());
+    } catch (TranslationProvider.TranslationProvidingException e) {
+      LOG.log(Level.SEVERE, "Cannot lot bins.", e);
+    }
+  }
 
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)

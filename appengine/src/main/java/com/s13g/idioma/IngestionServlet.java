@@ -18,9 +18,14 @@ package com.s13g.idioma;
 
 import com.google.common.io.ByteStreams;
 import com.s13g.idioma.data.IngestionUtil;
+import com.s13g.idioma.data.IngestionUtil.IngestionException;
+import com.s13g.idioma.data.IngestionUtil.UpdateStats;
+import com.s13g.idioma.data.Translation;
+import com.s13g.idioma.data.TranslationProvider.TranslationProvidingException;
+import com.s13g.idioma.data.TranslationsUtil;
 import com.s13g.idioma.ingestion.CsvTranslationProvider;
 import com.s13g.idioma.ingestion.SpreadsheetsTranslationProvider;
-import com.s13g.idioma.ingestion.TranslationProvider;
+import com.s13g.idioma.data.TranslationProvider;
 import com.s13g.idioma.ui.Template;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
@@ -31,6 +36,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.Collection;
 import java.util.logging.Logger;
 
 /**
@@ -68,19 +74,25 @@ public class IngestionServlet extends AbstractIdiomaServlet {
     }
 
     if (provider == null) {
-      resp.getWriter().write("No provider found.");
+      resp.getWriter().write("No ingestion provider found.");
       resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
       return;
     }
 
+    UpdateStats updateStats;
     try {
-      numTranslations = (new IngestionUtil()).ingest(provider);
-    } catch (IngestionUtil.IngestionException e) {
+      TranslationsUtil translationsUtil = new TranslationsUtil();
+      Collection<Translation> ingested = provider.getCompleteSet();
+      Collection<Translation> existing = translationsUtil.getCompleteSet();
+
+      // Ingest the new items.
+      updateStats = (new IngestionUtil()).ingest(existing, ingested, translationsUtil);
+    } catch (IngestionException | TranslationProvidingException e) {
       resp.getWriter().write("Something went wrong: " + e.getMessage());
       return;
     }
-    resp.getWriter().write(
-        String.format("Successfully ingested %d translations.", numTranslations));
+    resp.getWriter().write(String.format("Access. Added: %d  Deleted: %d  Updated: %d",
+        updateStats.numAdded, updateStats.numDeleted, updateStats.numUpdated));
   }
 
   private TranslationProvider getCsvProvider(HttpServletRequest req) throws IOException,

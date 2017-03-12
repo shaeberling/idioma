@@ -24,6 +24,7 @@ import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.ValueRange;
 import com.s13g.idioma.data.Translation;
+import com.s13g.idioma.data.TranslationProvider;
 import com.s13g.idioma.data.TranslationsUtil;
 
 import java.io.IOException;

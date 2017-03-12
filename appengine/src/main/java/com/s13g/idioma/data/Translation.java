@@ -17,10 +17,13 @@
 package com.s13g.idioma.data;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Strings;
 import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Index;
+
+import javax.annotation.Nullable;
 
 /**
  * A translation item.
@@ -78,7 +81,49 @@ public class Translation {
   @Index
   int bin;
 
+  /**
+   * How many times this translation has been shown to the user.
+   */
+  int numShown;
+
+  /**
+   * Sets the 'hash' property of this translation item.
+   */
   void setHash() {
-    hash = (long) Objects.hashCode(source, translated, note);
+    if (hash != null && hash != 0) {
+      throw new RuntimeException("Hash already set for item " + source + "/" + translated);
+    }
+    hash = (long) Objects.hashCode(source, translated);
+  }
+
+  /**
+   * @return A hash of all the 'extra' elements.
+   */
+  private int getExtraHash() {
+    return Objects.hashCode(this.fromConversation, this.disabled, this.important);
+  }
+
+  /**
+   * Updates the data in this translation with the data from the ingested translation, ensuring
+   * that data that needs to be persisted (like bin number) will keep persisted.
+   */
+  @Nullable
+  Translation updateFromIngested(Translation ingested) {
+    if (this.getExtraHash() == ingested.getExtraHash()) {
+      // Nothing to update.
+      return null;
+    }
+
+    this.fromConversation = ingested.fromConversation;
+    this.disabled = ingested.disabled;
+    this.important = ingested.important;
+    // Needs to stay: bin, numShown, all hashed values.
+    return this;
+  }
+
+  @Override
+  public int hashCode() {
+    // This works because our hash is an integer in reality. See #setHash.
+    return (int) (long) hash;
   }
 }

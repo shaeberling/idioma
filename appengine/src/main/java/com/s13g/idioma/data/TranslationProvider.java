@@ -1,4 +1,4 @@
-package com.s13g.idioma.ingestion;
+package com.s13g.idioma.data;
 
 import com.s13g.idioma.data.Translation;
 
@@ -16,11 +16,11 @@ public interface TranslationProvider {
   class TranslationProvidingException extends Exception {
     private static final String MSG = "Cannot fetch translations: %s";
 
-    TranslationProvidingException(String reason) {
+    public TranslationProvidingException(String reason) {
       super(String.format(MSG, reason));
     }
 
-    TranslationProvidingException(String reason, Throwable t) {
+    public TranslationProvidingException(String reason, Throwable t) {
       super(String.format(MSG, reason), t);
     }
   }
