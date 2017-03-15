@@ -17,7 +17,6 @@
 package com.s13g.idioma.data;
 
 import com.google.common.base.Objects;
-import com.google.common.base.Strings;
 import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
@@ -82,9 +81,14 @@ public class Translation {
   int bin;
 
   /**
-   * How many times this translation has been shown to the user.
+   * Counts the number of times the user got the response incorrect.
    */
-  int numShown;
+  int numRepliesCorrect;
+
+  /**
+   * Counts the number of times the user got the response correct.
+   */
+  int numRepliesIncorrect;
 
   /**
    * Sets the 'hash' property of this translation item.
@@ -117,7 +121,7 @@ public class Translation {
     this.fromConversation = ingested.fromConversation;
     this.disabled = ingested.disabled;
     this.important = ingested.important;
-    // Needs to stay: bin, numShown, all hashed values.
+    // Needs to stay: bin, numProcessed, all hashed values.
     return this;
   }
 

@@ -123,9 +123,12 @@ public class Bins {
     }
     if (!correct) {
       translation.bin = 0;
+      translation.numRepliesIncorrect++;
     } else if (translation.bin < 4) {
       translation.bin += 1;
+      translation.numRepliesCorrect++;
     }
+
     mBins.get(translation.bin).add(translation);
     mUpdater.persist(Collections.singleton(translation));
   }
