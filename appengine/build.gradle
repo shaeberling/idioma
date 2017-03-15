@@ -16,7 +16,7 @@ def props = new Properties()
 file("local.properties").withInputStream { props.load(it) }
 
 def devEmail = props.getProperty("devEmail")
-def appengineVersion = "1.9.49"
+def appengineVersion = "1.9.50"
 def googleClientApiVersion = "1.22.0"
 
 dependencies {
