@@ -33,6 +33,7 @@ public class Bins {
   private final List<List<Translation>> mBins;
   private final Map<Long, Translation> mByHash;
   private final DataStoreUpdater mUpdater;
+  private final RandomBinPicker mBinPicker;
 
   /**
    * Note: Do not just change this number to change the bin number. More instances in the code
@@ -55,7 +56,8 @@ public class Bins {
 
   private static void createInstance() {
     try {
-      sInstance = new TranslationsUtil().getBinnedTranslations();
+      RandomBinPicker binPicker = new RandomBinPicker();
+      sInstance = new TranslationsUtil().getBinnedTranslations(binPicker);
     } catch (TranslationProvider.TranslationProvidingException e) {
       sInstance = null;
       e.printStackTrace();
@@ -69,9 +71,10 @@ public class Bins {
     createInstance();
   }
 
-  Bins(List<List<Translation>> bins, DataStoreUpdater updater) {
+  Bins(List<List<Translation>> bins, DataStoreUpdater updater, RandomBinPicker binPicker) {
     mBins = bins;
     mUpdater = updater;
+    mBinPicker = binPicker;
 
     mByHash = new HashMap<>();
     for (List<Translation> bin : bins) {
@@ -90,7 +93,7 @@ public class Bins {
     List<Translation> translations;
     do {
       // Get a random, non-empty bin.
-      int bin = getRandomBin();
+      int bin = mBinPicker.getRandomBin();
       translations = mBins.get(bin);
       if (++tries > 100) {
         return null;
@@ -136,27 +139,6 @@ public class Bins {
       stats.numItemsInBin[i] = mBins.get(i).size();
     }
     return stats;
-  }
-
-  /**
-   * Get a bin number chosen randomly, with weights of the different bins taken into account. A
-   * lower bin therefore will have a higher chance of being selected than a higher bin.
-   */
-  private static int getRandomBin() {
-    // 16 8 4 2 1 = 31
-    // Bins: 0000000000000000 11111111 2222 33 4
-    int r = (new Random()).nextInt(31);
-    if (r < 16) {
-      return 0;
-    } else if (r < 24) {
-      return 1;
-    } else if (r < 28) {
-      return 2;
-    } else if (r < 30) {
-      return 3;
-    } else {
-      return 4;
-    }
   }
 
   public static class Statistics {

@@ -49,7 +49,7 @@ public class TranslationsUtil implements TranslationProvider, DataStoreUpdater {
     ofy().delete().entities(translations).now();
   }
 
-  Bins getBinnedTranslations() throws TranslationProvidingException {
+  Bins getBinnedTranslations(RandomBinPicker binPicker) throws TranslationProvidingException {
     ArrayList<List<Translation>> bins = new ArrayList<>(NUM_BINS);
     for (int i = 0; i < NUM_BINS; ++i) {
       bins.add(new LinkedList<Translation>());
@@ -57,7 +57,7 @@ public class TranslationsUtil implements TranslationProvider, DataStoreUpdater {
     for (Translation t : getCompleteSet()) {
       bins.get(t.bin).add(t);
     }
-    return new Bins(bins, this);
+    return new Bins(bins, this, binPicker);
   }
 
   /**
