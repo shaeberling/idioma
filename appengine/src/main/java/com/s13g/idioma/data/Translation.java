@@ -130,4 +130,9 @@ public class Translation {
     // This works because our hash is an integer in reality. See #setHash.
     return (int) (long) hash;
   }
+
+  @Override
+  public boolean equals(Object other) {
+    return other != null && other instanceof Translation && other.hashCode() == this.hashCode();
+  }
 }

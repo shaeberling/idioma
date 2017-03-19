@@ -17,6 +17,7 @@
 package com.s13g.idioma.data;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -30,8 +31,18 @@ import java.util.logging.Logger;
 public class Bins {
   private static final Logger LOG = Logger.getLogger("Bins");
 
+  /**
+   * Translations in their respective bins.
+   */
   private final List<List<Translation>> mBins;
+  /**
+   * Translations keyed by their hash for fast access.
+   */
   private final Map<Long, Translation> mByHash;
+  /**
+   * Translations keyed by their source word. Each source word can have multiple translations
+   */
+  private final Map<String, List<Translation>> mBySource;
   private final DataStoreUpdater mUpdater;
   private final RandomBinPicker mBinPicker;
 
@@ -77,18 +88,32 @@ public class Bins {
     mBinPicker = binPicker;
 
     mByHash = new HashMap<>();
+    mBySource = new HashMap<>();
+
+    // Just for logging and sanity checking.
+    int moreThanOneForSourceCount = 0;
     for (List<Translation> bin : bins) {
       for (Translation translation : bin) {
+        // Populate by-hash.
         mByHash.put(translation.hash, translation);
+
+        // Populate by-source.
+        if (!mBySource.containsKey(translation.source)) {
+          mBySource.put(translation.source, new ArrayList<Translation>());
+        } else {
+          moreThanOneForSourceCount++;
+        }
+        mBySource.get(translation.source).add(translation);
       }
     }
+    LOG.info(String.format("Found %d sources with >1 translation.", moreThanOneForSourceCount));
   }
 
   /**
    * Returns a random Translation. Can return null, if there are no translations available.
    */
   @Nullable
-  public Translation getRandom() {
+  public TranslationSet getRandom() {
     int tries = 0;
     List<Translation> translations;
     do {
@@ -102,7 +127,8 @@ public class Bins {
 
     // Get a random item from the bin.
     int itemIdx = (new Random()).nextInt(translations.size());
-    return translations.get(itemIdx);
+    Translation translation = translations.get(itemIdx);
+    return TranslationSet.from(translation, mBySource.get(translation.source));
   }
 
   /**

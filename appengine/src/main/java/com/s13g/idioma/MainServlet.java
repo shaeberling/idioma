@@ -19,6 +19,7 @@ package com.s13g.idioma;
 import com.s13g.idioma.data.Bins;
 import com.s13g.idioma.data.Translation;
 import com.s13g.idioma.data.TranslationProvider;
+import com.s13g.idioma.data.TranslationSet;
 import com.s13g.idioma.data.TranslationsUtil;
 import com.s13g.idioma.ui.Template;
 
@@ -26,6 +27,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -54,21 +56,43 @@ public class MainServlet extends AbstractIdiomaServlet {
       throws ServletException, IOException {
     resp.setContentType("text/html; charset=UTF-8");
     resp.setCharacterEncoding("UTF-8");
-    Translation translation = Bins.getInstance().getRandom();
-    if (translation == null) {
+    TranslationSet set = Bins.getInstance().getRandom();
+    if (set == null) {
       resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
       resp.getWriter().write("No data found.");
       return;
     }
 
     String html = Template.fromFile("WEB-INF/html/index.html")
-        .with("source", translation.source)
-        .with("note", translation.note)
-        .with("hash", translation.hash)
-        .with("solution", translation.translated)
+        .with("source", set.mainTranslation.source)
+        .with("note", set.mainTranslation.note)
+        .with("hash", set.mainTranslation.hash)
+        .with("solution", set.mainTranslation.translated)
+        .with("alt_solutions", createAltSolutionParam(set.alternatives))
+        .with("alt_solution_hashes", createAltSolutionHashesParam(set.alternatives))
         .render();
     resp.getWriter().write(html);
   }
 
+  private static String createAltSolutionParam(List<Translation> translations) {
+    String result = "";
+    for (Translation translation : translations) {
+      if (!result.isEmpty()) {
+        result += ",";
+      }
+      result += translation.translated;
+    }
+    return result;
+  }
 
+  private static String createAltSolutionHashesParam(List<Translation> translations) {
+    String result = "";
+    for (Translation translation : translations) {
+      if (!result.isEmpty()) {
+        result += ",";
+      }
+      result += translation.hash;
+    }
+    return result;
+  }
 }

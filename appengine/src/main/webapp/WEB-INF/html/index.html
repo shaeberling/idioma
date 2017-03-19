@@ -26,10 +26,24 @@ input {
 
 #correct_answer {
   display: none;
+  font-size: 0.6em;
+  padding: 5px;
+}
+
+#alt_solutions {
+  display: none;
+  font-size: 0.6em;
+  padding: 5px;
 }
 
 #note {
   display: none;
+}
+#message_alternatives_exists {
+  display: none;
+  font-size: 0.6em;
+  padding: 5px;
+  color: gray;
 }
 
 </style>
@@ -39,42 +53,119 @@ input {
 <input id="usertext" name="usertext" autofocus onkeypress="return onKeyPress(event)"/>
 
 <div id="note">Note: <!--IDI note OMA--></div>
-<div id="correct_answer">Correct answer: <!--IDI solution OMA--></div>
+<div id="message_alternatives_exists">Alternatives exist</div>
+<div id="correct_answer"><b>Correct answer:</b> <!--IDI solution OMA--></div>
+<div id="alt_solutions"><b>Alternatives:</b> <!--IDI alt_solutions OMA--></div>
 
 <form id="submit_result_form" method="post">
-    <input name="hash" value="<!--IDI hash OMA-->" type="hidden"/>
+    <input id="hash" name="hash" value="<!--IDI hash OMA-->" type="hidden"/>
     <input id="correct" name="correct" value="" type="hidden"/>
 </form>
 
 <script>
+// CONSTANTS
+var ENTER_KEY = 13;
+
+// FROM SERVER
+var solution = '<!--IDI solution OMA-->'.toLowerCase();
+var alt_solutions = '<!--IDI alt_solutions OMA-->'.split(',');
+var alt_solution_hashes = '<!--IDI alt_solution_hashes OMA-->'.split(',');
+var note = '<!--IDI note OMA-->';
+
+// GLOBAL VARIABLES
 var submitOnFalse = false
 
-var note = '<!--IDI note OMA-->';
+function altSolutionsExist() {
+  return '<!--IDI alt_solutions OMA-->'.length >0;
+};
+
+function showAsBlock(id) {
+  document.getElementById(id).style.display = 'block';
+};
+
 if (note.length > 0) {
-  document.getElementById('note').style.display = 'block';
+  showAsBlock('note');
+}
+if (altSolutionsExist()) {
+  showAsBlock('message_alternatives_exists');
 }
 
+function getUserInput() {
+  return document.getElementById('usertext').value.toLowerCase();
+};
+
+function submitForm() {
+  document.getElementById('submit_result_form').submit();
+};
+
+// Sets whether the user gave a correct answer for the set translation
+// with the currently set hash. This will be submitted when the form
+// is being submitted and applied to the set hash.
+function setCorrect(correct) {
+  document.getElementById('correct').value = correct;
+  document.getElementById('usertext').style.background =
+      correct ? 'rgba(0, 255, 0, 0.2)' : 'rgba(255, 0, 0, 0.2)';
+};
+
+// Sets/overrides the currently set correct hash. This is the value
+// that will be submitted when the form is submitted.
+function setCorrectHash(hash) {
+  setCorrect(true);
+  document.getElementById('hash').value = hash;
+};
+
+var submitOnNextKeyPress = false;
+// A key was pressed.
 function onKeyPress(event) {
-  if (submitOnFalse) {
-    document.getElementById('submit_result_form').submit();
+  if (submitOnNextKeyPress) {
+    submitForm();
     return false;
   }
 
-  var solution = '<!--IDI solution OMA-->';
-  if (event.keyCode == 13) {
-    var typed = document.getElementById('usertext').value.toLowerCase();
-    var correct = typed == solution.toLowerCase();
-    document.getElementById('correct').value = correct;
-    if (correct) {
-      document.getElementById('submit_result_form').submit();
-    } else {
-      document.getElementById('correct_answer').style.display = 'block';
-      submitOnFalse = true;
-    }
+  var userInput = getUserInput().trim().toLowerCase();
+  if (event.keyCode == ENTER_KEY && userInput.length > 0) {
+    submitOnNextKeyPress = true;
+    onProcessInput(userInput);
     return false;
   }
   return true;
 };
+
+// Enter key was pressed.
+function onProcessInput(userInput) {
+  var correct = userInput == solution;
+  if (altSolutionsExist()) {
+    showAsBlock('alt_solutions');
+  }
+
+  // The primary translation was correct
+  if (correct) {
+    setCorrect(true);
+    // If there were no alternative solutions, submit right away.
+    // Otherwise let the user check the alternatives first.
+    if (!altSolutionsExist()) {
+      submitForm();
+    }
+  } else {
+    showAsBlock('correct_answer');
+    if (!altSolutionsExist()) {
+      // The primary answer was not correct and there were no alternatives.
+      setCorrect(false);
+    } else {
+      // The primary answer was not correct but there are alternatives.
+      var altCorrectIdx = alt_solutions.indexOf(userInput);
+      if (altCorrectIdx >= 0) {
+        // One of the alternative translations is a match!
+        setCorrectHash(alt_solution_hashes[altCorrectIdx]);
+        console.log('Overriding correct hash with alt: ' + alt_solution_hashes[altCorrectIdx]);
+      } else {
+        // None of the alternatives matched the typed answer either.
+        setCorrect(false);
+      }
+    }
+  }
+};
+
 
 </script>
 
